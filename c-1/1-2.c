@@ -7,7 +7,7 @@ char hex[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 
 char *xor_hexstr(const char* hex1, const int size1, const char* hex2, const int size2) {
   char *bin1 = bin_from_hexstr(hex1, size1);
   char *bin2 = bin_from_hexstr(hex2, size2);
-  char *xor = NULL;
+  char *xor = calloc(size1 + 1, 1);
 
   for(int i = 0; i < size1; ++i) {
     xor[i] = bin1[i] ^ bin2[i];

@@ -28,3 +28,30 @@ char *bin_from_hexstr(const char *str, const unsigned int size) {
 
   return bin;
 }
+
+char *byte_from_hexstr(const char *str, const unsigned int size) {
+  char *bin = calloc(size / 2 + 1, 1);
+  char bin_l, bin_h;
+
+  for(int i = 0, j = 0; i < (int)size; i+=2, ++j) {
+    bin_h = str[i];
+    if (str[i] >= 97) { // deal with lowercase
+      bin_h -= 87;
+    } else if (str[i] >= 65) { // deal with uppercase
+      bin_h -= 55;
+    } else if (str[i] < 58) { // deal with nums
+      bin_h -= 48;
+    }
+    bin_l = str[i + 1];
+    if (str[i + 1] >= 97) { // deal with lowercase
+      bin_l -= 87;
+    } else if (str[i + 1] >= 65) { // deal with uppercase
+      bin_l -= 55;
+    } else if (str[i + 1] < 58) { // deal with nums
+      bin_l -= 48;
+    }
+    bin[j] = bin_h << 4 | bin_l;
+  }
+
+  return bin;
+}
