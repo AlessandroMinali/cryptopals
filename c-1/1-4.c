@@ -13,12 +13,6 @@ int main() {
   for(int i = 0; i < LINES; ++i) {
     fgets(buf, BUF_SIZE, f);
     results[i] = one_byte_xor_cipher(buf, strlen(buf));
-
-    // printf("The key was 0x%x with a score of %f on line %d\n", results[i]->key, results[i]->score, i);
-    // for(int j = 0; j < (int)strlen(results[i]->bytes); ++j) {
-    //   printf("%c", results[i]->bytes[j] ^ results[i]->key);
-    // }
-    // printf("\n");
   }
 
   float min = results[0]->score;
