@@ -4,7 +4,7 @@
 #include <math.h>
 
 #define FREQ_CHAR 13
-#define CHAR_BYTES 127
+#define CHAR_BYTES 256
 
 const char *bit_rep[16] = {
   [ 0] = "0000", [ 1] = "0001", [ 2] = "0010", [ 3] = "0011",
