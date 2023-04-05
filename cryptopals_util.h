@@ -185,12 +185,6 @@ unsigned int bytes_from_b64(char *src, const unsigned int len, char *dst) {
   return lines;
 }
 
-void handleErrors(void)
-{
-  // ERR_print_errors_fp(stderr);
-  abort();
-}
-
 int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char  *key, unsigned char *plaintext) {
   EVP_CIPHER_CTX *ctx;
   int len;
