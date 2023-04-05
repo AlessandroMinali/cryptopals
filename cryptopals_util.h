@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <openssl/evp.h>
 
 #define FREQ_CHAR 13
 #define CHAR_BYTES 256
@@ -37,7 +38,7 @@ char *bin_from_hexstr(const char *str, const unsigned int size) {
   return bin;
 }
 
-char *byte_from_hexstr(const char *str, const unsigned int size) {
+char *bytes_from_hexstr(const char *str, const unsigned int size) {
   char *bin = calloc(size / 2 + 1, 1);
   char bin_l, bin_h;
 
@@ -62,6 +63,17 @@ char *byte_from_hexstr(const char *str, const unsigned int size) {
   }
 
   return bin;
+}
+
+char byte_from_b64char(char c) {
+  if (c >= 97) { c -= 71; } // deal with lowercase
+  else if (c >= 65) { c -= 65; } // deal with uppercase
+  else if (c == '+') { c = 62; }
+  else if (c == '/') { c = 63; }
+  else if (c == '=') { c = 0; }
+  else if (c < 58) { c += 4; } // deal with nums
+
+  return c;
 }
 
 struct xor_cipher{
@@ -89,13 +101,12 @@ float english_score(char *str) {
   return score;
 }
 
-struct xor_cipher *one_byte_xor_cipher(const char *str, const int size) {
-  char *bytes = byte_from_hexstr(str, size);
+struct xor_cipher *one_byte_xor_cipher(char *bytes, const int size) {
   float scores[CHAR_BYTES] = { 0 };
 
   for(int j = 0; j < CHAR_BYTES; ++j) {
     char bucket[FREQ_CHAR] = { 0 };
-    for(int i = 0; i < (int)strlen(bytes) - 1; ++i) {
+    for(int i = 0; i < size; ++i) {
       int tmp = bytes[i] ^ j;
 
       // tally occurence
@@ -107,7 +118,7 @@ struct xor_cipher *one_byte_xor_cipher(const char *str, const int size) {
 
     // calc score
     for(int i = 0; i < FREQ_CHAR; ++i) {
-      scores[j] += fabs(bucket[i] / (double)strlen(bytes) * 100 - eng_freqs[i]);
+      scores[j] += fabs(bucket[i] / (double)size * 100 - eng_freqs[i]);
     }
   }
 
@@ -131,4 +142,67 @@ struct xor_cipher *one_byte_xor_cipher(const char *str, const int size) {
   result->bytes = bytes;
 
   return result;
+}
+
+unsigned int hamming(const char *str1, const char *str2, unsigned int len) {
+  unsigned int result = 0;
+
+  for(unsigned int i = 0; i < len; ++i) {
+    result += __builtin_popcount(str1[i] ^ str2[i]);
+  }
+
+  return result;
+}
+
+char *every_nth_byte(const char *str, const unsigned int size, const unsigned int n, const unsigned int block) {
+  char *result = calloc(size / block, 1);
+
+  for(int i = 0; i < (int)(size / block); ++i) {
+    result[i] = str[i * block + n];
+  }
+
+  return result;
+}
+
+unsigned int bytes_from_b64(char *src, const unsigned int len, char *dst) {
+  int lines = 0;
+  for(int i = 0, j = 0; i < (int)len; ++i, ++j) {
+    if (src[i] == '\n') {
+      --j; // if newlines are present then the cursor is allowed to drift ahead of write head
+      ++lines;
+    } else {
+      src[j] = byte_from_b64char(src[i]);
+    }
+  }
+
+  char *byt_p = dst;
+  for (int count = (len - lines) / 4; count > 0; --count, src += 4, byt_p += 3) {
+    byt_p[0] = (src[0] << 2) | (src[1] >> 4);
+    byt_p[1] = (src[1] << 4) | ((src[2] >> 2) & 0xf);
+    byt_p[2] = (src[2] << 6) | src[3];
+  }
+
+  return lines;
+}
+
+void handleErrors(void)
+{
+  // ERR_print_errors_fp(stderr);
+  abort();
+}
+
+int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char  *key, unsigned char *plaintext) {
+  EVP_CIPHER_CTX *ctx;
+  int len;
+  int plaintext_len;
+
+  ctx = EVP_CIPHER_CTX_new();
+  EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, NULL);
+  EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
+  plaintext_len = len;
+  EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+  plaintext_len += len;
+  EVP_CIPHER_CTX_free(ctx);
+
+  return plaintext_len;
 }

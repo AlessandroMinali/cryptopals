@@ -12,7 +12,8 @@ int main() {
   FILE *f = fopen("4.txt", "rb");
   for(int i = 0; i < LINES; ++i) {
     fgets(buf, BUF_SIZE, f);
-    results[i] = one_byte_xor_cipher(buf, strlen(buf));
+    char *bytes = byte_from_hexstr(buf, strlen(buf));
+    results[i] = one_byte_xor_cipher(bytes, strlen(bytes));
   }
 
   float min = results[0]->score;
